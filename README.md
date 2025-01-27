@@ -1,7 +1,7 @@
 # AWS-Data-Processing
 This repository contains the implementation of a scalable and robust data processing pipeline designed to extract, transform, and load (ETL) data from public data portals into structured, optimized formats for analysis and reporting. The project leverages modern cloud technologies and big data tools for efficient processing.
 
-- 
+- Data Source: The pipeline fetches real estate transaction records from a public data portal, which provides data related to Seoul's real estate market. The records include various property categories such as Apartments, Houses, Land, and Other property types.
 
 
 ### Overview
@@ -51,11 +51,44 @@ This repository contains the implementation of a scalable and robust data proces
 **Key preprocessing steps include**
 - Cleaning raw data to remove duplicates, errors, and irrelevant information.
 - Standardizing and transforming data to prepare Silver Data.
-- The public data fetched from the portal contains various datasets, including but not limited to apartment transaction records. A view is created on the Bronze Data for this purpose. The filtered data is then inserted into a new table in RDS
+- A table is created in a relational database (RDS) specifically for apartment transaction records, ensuring structured storage for this category.
+```
+%sql
+-- table for number of view per village 
+
+CREATE EXTERNAL TABLE  story_data.apart_user_view_silver
+(
+  adid string, 
+  apart_id string,
+  base_dt string
+)
+PARTITIONED BY ( 
+  base_date date )
+STORED AS PARQUET
+LOCATION 's3://dataeng-handson/silver/danji_user_view_silver'
+tblproperties ("parquet.compress"="SNAPPY" ,"classification"="parquet")
+;
+```
+```
+%sql
+insert overwrite table story_data.apart_user_view_silver
+    PARTITION(base_date)  
+select 
+adid,
+building_id as apart_id,
+timestamp as base_dt,
+to_date(base_date, 'yyyy-MM-dd') as base_date 
+from story_data.applog
+where item_category = 'apartment'
+ and building_id != '0'
+ and building_id != 'NULL'
+```
 ![](images/silver_data_creation.png)
 
 **Processed Silver Data is stored**
-- In S3: For scalable storage and intermediate processing.
+- In S3: 
+    - For scalable storage and intermediate processing.
+    - AWS Glue serves as the metadata store for Apache Spark on EMR. While the actual data is stored in S3
 - In RDS: For structured queries and further transformation.
 
 ### Data Processing Workflow: Gold Data Creation
