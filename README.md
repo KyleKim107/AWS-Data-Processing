@@ -97,7 +97,43 @@ where item_category = 'apartment'
 - Apache Spark on EMR: After preprocessing and cleaning the data into Silver Data, advanced transformations are performed to generate Gold Data.
 
 - Joining Tables: Relevant tables from the Silver Data layer are joined to create aggregated datasets.
+``` 
+%sql
+//Create a table for gold dataset.
 
-- Examples of transformations:
-Combining transactional and metadata tables to add context to the data.
+create external table story_data.apart_user_view_summary
+ (
+      base_date string, 
+      apart_id string, 
+      danji_name string,
+      sido string,
+      sigungu string,
+      dong string,
+      view_count int
+ )
+ STORED AS PARQUET
+ LOCATION 's3://dataeng-handson/gold/apart_user_view_summary'
+ tblproperties ("parquet.compress"="SNAPPY" ,"classification"="parquet")
+```
 
+```
+%sql
+insert overwrite table story_data.apart_view_summary
+select a.base_date, 
+       a.apart_id, 
+       b.danji_name,
+       b.sido,
+       b.sigungu,
+       b.dong,
+       count(*) as view_count
+from story_data.apart_user_view_silver a 
+join `handson-db `.`fc-parquet` b
+on a.apart_id = b.id 
+group by a.base_date, 
+       a.apart_id, 
+       b.danji_name,
+       b.sido,
+       b.sigungu,
+       b.dong
+order by count(*) desc
+```
