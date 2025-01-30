@@ -18,8 +18,9 @@ This repository contains the implementation of a scalable and robust data proces
 
 #### Ingestion Phase
 
-**- Data Source:** Real estate transaction data is fetched from the public data portal at regular intervals.
-**- AWS Lambda:** A Lambda function automates the data ingestion process, triggered at scheduled intervals to fetch data.
+**Data Source:** Real estate transaction data is fetched from the public data portal at regular intervals.
+
+**AWS Lambda:** Lambda function collects apartment real transaction data from the Korean Public Data Portal API and loads it into a MySQL database(RDS).
 
 **Creating Bronze Data**
 
