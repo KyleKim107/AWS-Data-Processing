@@ -7,10 +7,13 @@ This repository contains the implementation of a scalable and robust data proces
 ### Overview
 
 ![](images/overview.png)
+
 ### The data processing pipeline follows a three-tier architecture:
 - Bronze Data: Raw data containing duplicates, errors, or irrelevant information.
 - Silver Data: Cleaned and transformed data, refined but not yet fully optimized for analysis.
 - Gold Data: Fully processed and business-ready data for analytics, reporting, and KPI generation.
+
+
 
 ### Part.1
 
