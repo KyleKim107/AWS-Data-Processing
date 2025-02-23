@@ -1,5 +1,5 @@
 # AWS-Data-Processing
-This repository contains the implementation of a scalable and robust data processing pipeline designed to extract, transform, and load (ETL) data from public data portals into structured, optimized formats for analysis and reporting. The project leverages modern cloud technologies and big data tools for efficient processing.
+This repository contains the implementation of a scalable and robust data processing pipeline designed to extract, transform, and load (ETL) data from public data portals into structured, optimized formats for analysis and reporting. The pipeline follows a data lake architecture with Bronze (Raw Data), Silver (Cleaned Data), and Gold (Business-Ready Data) stages, as depicted in the provided diagrams.
 
 - Data Source: The pipeline fetches real estate transaction records from a public data portal, which provides data related to Seoul's real estate market. The records include various property categories such as Apartments, Houses, Land, and Other property types.
 
@@ -23,7 +23,7 @@ This repository contains the implementation of a scalable and robust data proces
 
 **Data Source:** Real estate transaction data is fetched from the public data portal at regular intervals.
 
-**AWS Lambda:** Lambda function collects apartment real transaction data from the Korean Public Data Portal API and loads it into a MySQL database(RDS).
+**AWS Lambda:** Lambda function collects apartment real transaction data from the Korean Public Data Portal API and loads it into a MySQL database(RDS) and S3 as Bronze Data (raw log files)
 
 **Creating Bronze Data**
 
@@ -99,8 +99,16 @@ where item_category = 'apartment'
 **Transforming and Joining Tables**
 
 - Apache Spark on EMR: After preprocessing and cleaning the data into Silver Data, advanced transformations are performed to generate Gold Data.
+  - Within the EMR environment, Zeppelin is used to interactively develop, test, and visualize the logic for these transformations.
 
 - Joining Tables: Relevant tables from the Silver Data layer are joined to create aggregated datasets.
+
+* Why Redshift?
+  - Redshift uses a columnar storage format and massively parallel processing (MPP) architecture, which is highly efficient for running complex SQL queries on structured or semi-structured data. This is particularly useful for aggregating data, generating KPIs, and creating summary statistics or business-specific reports, as described in your Gold Data stage.
+* EMR Hadoop Limitation: 
+  - Hadoop on EMR, while powerful for processing large-scale unstructured data, can be slower for analytical queries due to its row-based storage and distributed file system (HDFS) design. It’s better for batch processing and data transformation rather than serving as a query engine for BI.
+
+
 ``` 
 %sql
 //Create a table for gold dataset.
@@ -141,3 +149,25 @@ group by a.base_date,
        b.dong
 order by count(*) desc
 ```
+
+# Visualization
+![](images/visualize.png)
+
+* Presto
+  - Presto’s Advantage: Presto can query data across diverse data sources—such as S3 (e.g., Bronze Data log files), RDS (DBMS schemas), Redshift (Gold Data), and even external databases—without needing to move or replicate data. It uses a federated query architecture, allowing it to join and analyze data from multiple locations in real time.
+
+  - Downloading presto jar on the EMR cluster
+    ![](images/download_presto_jar_in_emr.png)
+  - Configure presto interpreter in zeppelin on the EMR cluster
+  ![](images/set_interpreter.png)
+
+- Integrates with Tableau for creating reports and dashboards from processed data.
+* Tableau
+  - A visualization tool for reporting and dashboards.
+  - Use the Presto JDBC driver to connect Tableau to your EMR Presto instance. Configure the connection with the Presto coordinator URL (e.g., http://<emr-master>:8889), catalog (e.g., hive), and schema (e.g., default).
+- visualize the count of real estate transaction data with a bar chart
+![](images/tableau_bar_chart.png)
+- visualize the count of real estate transaction data with a geographical chart
+![](images/tableau_geographic_chart.png)
+
+
